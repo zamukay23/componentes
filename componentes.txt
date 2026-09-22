@@ -1,0 +1,567 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package repasoreal;
+import java.sql.*;
+
+/**
+ *
+ * @author ASUS
+ */
+public class conexion {
+    
+    private String url = "jdbc:mysql://localhost:3306/";
+    private String nombre = "root";
+    private String pass = "";
+
+public Connection conectar (String base) throws SQLException{
+    return DriverManager.getConnection(url+base,nombre,pass);
+    
+}
+    
+
+}
+
+-----------------
+
+
+package repasoreal;
+
+import java.awt.Color;
+import java.awt.Component;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+import java.sql.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.table.TableCellRenderer;
+
+public class Tabla extends JTable {
+
+    DefaultTableModel tabla = new DefaultTableModel();
+    conexion cc = new conexion();
+
+    public Tabla() {
+
+        this.setModel(tabla);
+
+    }
+
+    public void ingresar(String tb, String columna, String bd) {
+        this.setModel(tabla);
+        tabla.setRowCount(0); 
+        if (tabla.getColumnCount() == 0) {
+            tabla.addColumn(columna); 
+        }
+            
+        try {
+            String sql = "Select * from " + tb;
+            Connection con = cc.conectar(bd);
+            PreparedStatement ps = con.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String valor = rs.getString(columna);
+                tabla.addRow(new Object[]{valor});
+                
+            }
+
+        } catch (SQLException ex) {
+            Logger.getLogger(Tabla.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+
+    @Override
+    public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+        Component compo = super.prepareRenderer(renderer, row, column);
+
+        Object valor = getValueAt(row, column);
+
+
+       if (valor != null) {
+            try {
+                Double numero = Double.parseDouble(valor.toString());
+
+                if (numero > 7) {
+                    compo.setBackground(Color.GREEN);
+                } else {
+                    compo.setBackground(Color.RED);
+                }
+            } catch (NumberFormatException ex) {
+                compo.setBackground(Color.WHITE);
+            }
+        } else {
+            // Si la celda está vacía (null), la pintamos de blanco por defecto
+            compo.setBackground(Color.WHITE);
+        }
+        
+        return compo;
+    }
+}
+----------------------------
+  
+
+import java.awt.Color;
+import java.awt.Component;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import java.sql.*;
+import javax.swing.JOptionPane;
+
+public class cpCombo extends JComboBox<String> {
+
+    private DefaultComboBoxModel<String> combo;
+    Conexion con = new Conexion();
+
+    public cpCombo() {
+        combo = new DefaultComboBoxModel<>();
+        this.setModel(combo);
+        this.setRenderer(new ColorfulRenderer());
+    }
+
+    public void getdata(String column, String table, String base) throws SQLException {
+        try {
+            combo.removeAllElements();
+                String sql = "SELECT * FROM " + table;
+            Connection cn = con.conectar(base);
+            PreparedStatement prs = cn.prepareStatement(sql);
+            ResultSet res = prs.executeQuery();
+            while (res.next()) {
+                String data = res.getString(column);
+                combo.addElement(data);
+                typeData(data);
+            }
+            cn.close();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "ERROR INTERNO DEL SERVIDOR: " + e.getMessage());
+        }
+    }
+
+    private class ColorfulRenderer extends JLabel implements ListCellRenderer<String> {
+        public ColorfulRenderer() {
+            setOpaque(true);
+        }
+        @Override
+        public Component getListCellRendererComponent(
+                JList<? extends String> list,
+                String value,
+                int index,
+                boolean isSelected,
+                boolean cellHasFocus) {
+            setText(value);
+            if (value != null && !value.isEmpty()) {
+                char a = value.charAt(0);
+                if (Character.isAlphabetic(a)) {
+                    setBackground(Color.GREEN);
+                } else if (Character.isDigit(a)) {
+                    setBackground(Color.RED);
+                } else {
+                    setBackground(Color.WHITE);
+                }
+            } else {
+                setBackground(Color.WHITE);
+            }
+            if (isSelected) {
+                setBackground(getBackground().darker());
+                setForeground(Color.WHITE);
+            } else {
+                setForeground(Color.BLACK);
+            }
+            return this;
+        }
+    }
+
+    public void typeData(String data) {
+        char a = data.charAt(0);
+        if (Character.isAlphabetic(a)) {
+            this.setBackground(Color.GREEN);
+        } else if (Character.isDigit(a)) {
+            this.setBackground(Color.RED);
+        } else {
+            this.setBackground(Color.WHITE);
+        }
+    }
+}
+------------------
+
+
+     private void textField1ActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        // TODO add your handling code here:
+    }                                          
+
+    private void jbtnGuardarActionPerformed(java.awt.event.ActionEvent evt) {                                            
+     if (!validarCampos()) return;
+Estudiante estudiante = new Estudiante(
+    textField1.getText(), // Cédula
+    textField2.getText(), // Nombre
+    textField3.getText(), // Apellido
+    textField4.getText(), // Dirección
+    textField5.getText()  // Teléfono
+);
+
+      if (estudianteDAO.agregarEstudiante(estudiante)) {
+    JOptionPane.showMessageDialog(this, "Estudiante guardado exitosamente.");
+    limpiarCampos();
+    textosInicio();
+    botonesInicio();
+    cargarTabla(); // <--- AGREGAR ESTO AQUÍ
+}
+    
+    }                                           
+
+    private void textField5ActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        // TODO add your handling code here:
+    }                                          
+
+    private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {                                            
+      String cedula = jTxtCedula.getText();
+        if (cedula.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Seleccione un estudiante para eliminar.");
+            return;
+        }
+
+        if (JOptionPane.showConfirmDialog(this, "¿Desea eliminar este estudiante?", "Confirmar", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+            if (estudianteDAO.eliminarEstudiante(cedula)) {
+                JOptionPane.showMessageDialog(this, "Estudiante eliminado exitosamente.");
+                limpiarCampos();
+                textosInicio();
+                botonesInicio();
+            }
+        }
+    
+    }                                           
+
+    private void jBtnEditarActionPerformed(java.awt.event.ActionEvent evt) {                                           
+      if (!validarCampos()) return;
+
+        Estudiante estudiante = new Estudiante(
+            jTxtCedula.getText(),
+            jTxtNombre.getText(),
+            jTxtApellido.getText(),
+            jTxtDireccion.getText(),
+            jTxtTelefono.getText()
+        );
+
+        if (estudianteDAO.actualizarEstudiante(estudiante)) {
+            JOptionPane.showMessageDialog(this, "Estudiante actualizado exitosamente.");
+            limpiarCampos();
+            textosInicio();
+            botonesInicio();
+        }
+    
+        
+        
+    }                                          
+
+    private void jBtnCancelarActionPerformed(java.awt.event.ActionEvent evt) {                                             
+          limpiarCampos();
+    textosInicio();
+    botonesInicio();
+    }                                            
+
+    private void jBtnNuevoActionPerformed(java.awt.event.ActionEvent evt) {                                          
+      limpiarCampos();
+        textosNuevo();
+        botonesNuevo();
+    } 
+
+
+------------------------------------------------
+
+
+  package componentes;
+
+
+import javax.swing.JComboBox;
+import javax.swing.JOptionPane;
+
+public class Combo extends JComboBox<Object> {
+
+    public Combo() {
+        super();
+    }
+
+    @Override
+    public void addItem(Object item) {
+        if (item == null) {
+            return;
+        }
+
+        try {
+            int numero = Integer.parseInt(item.toString().trim());
+
+            if (numero % 2 == 0) {
+                super.addItem(numero); 
+            } else {
+                JOptionPane.showMessageDialog(null,
+                        "Error El número " + numero + " es IMPAR.",
+                        "Validación de Componente",
+                        JOptionPane.WARNING_MESSAGE);
+            }
+
+        } catch (NumberFormatException e) {
+            // No es un entero válido (es texto con letras, decimal, etc.)
+            JOptionPane.showMessageDialog(null,
+                    "Error [Componente Par]: '" + item + "' no es un número entero válido.",
+                    "Validación de Componente",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+}
+
+--------------------------
+  package componentes;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import javax.swing.JTextField;
+import javax.swing.text.Document;
+
+/**
+ *
+ * @author ASUS
+ */
+public class Decimales extends JTextField {
+
+    public Decimales() {
+
+        // 1. Bloquea letras en tiempo real mientras el usuario escribe
+        this.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                jTextField1KeyTyped(evt);
+            }
+        });
+        
+        // 2. Redondea cuando el usuario presiona ENTER
+        this.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jTextField1ActionPerformed(evt);
+            }
+        });
+
+        // 3. Redondea cuando el usuario da clic afuera (pierde el foco)
+        this.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                jTextField1FocusLost(evt);
+            }
+        });
+    }
+
+    // Filtro para el teclado
+    private void jTextField1KeyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        // Bloquea si no es número y no es punto
+        if (!Character.isDigit(c) && c != '.') {
+            evt.consume();
+        }
+        // Bloquea si intenta poner un segundo punto decimal
+        if (c == '.' && this.getText().contains(".")) {
+            evt.consume();
+        }
+    }
+
+    // Evento al presionar Enter
+    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {
+        aplicarRedondeo();
+    }
+
+    // Evento al dar clic afuera
+    private void jTextField1FocusLost(java.awt.event.FocusEvent evt) {
+        aplicarRedondeo();
+    }
+
+    // Método centralizado que toma el texto y usa tu lógica de BigDecimal
+    private void aplicarRedondeo() {
+        String texto = this.getText().trim();
+        if (!texto.isEmpty()) {
+            try {
+                double valor = Double.parseDouble(texto);
+                double valorFormateado = formatearDosDecimales(valor);
+                this.setText(String.valueOf(valorFormateado));
+            } catch (NumberFormatException e) {
+                this.setText(""); // Limpia si hay error de formato
+            }
+        }
+    }
+
+    // Tu método original e impecable con BigDecimal
+    public double formatearDosDecimales(double valor) {
+        BigDecimal bd = new BigDecimal(Double.toString(valor));
+        bd = bd.setScale(2, RoundingMode.HALF_UP);
+        return bd.doubleValue();
+    }
+}
+-----------------------------
+  package componentes;
+
+import javax.swing.JTextField;
+
+public class Letras extends JTextField {
+
+    public Letras() {
+        this.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                jTextField2KeyTyped(evt);
+            }
+        });
+
+    }
+
+    private void jTextField2KeyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+
+        // 1. Si NO es letra y tampoco es un espacio, se elimina el carácter
+        if (!Character.isLetter(c) && c != ' ') {
+            evt.consume();
+        } else {
+            // 2. Si es letra, se fuerza a que sea mayúscula
+            evt.setKeyChar(Character.toUpperCase(c));
+        }
+    }
+}
+-------------------------------------------
+  package componentes;
+
+import java.awt.Color;
+import java.awt.Component;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+
+public class Tabla extends JTable {
+
+    private final Color COLOR_PAR = new Color(144, 238, 144);   // Verde claro
+    private final Color COLOR_IMPAR = new Color(255, 182, 193); // Rojo claro
+
+    public Tabla() {
+        super();
+        
+        // 1. Crear el modelo con 1 sola columna ("Datos") y 10 filas vacías
+        DefaultTableModel model = new DefaultTableModel();
+        model.addColumn("Datos");
+        
+        // Agregamos 10 filas vacías para que el usuario pueda escribir directamente
+        for (int i = 0; i < 10; i++) {
+            model.addRow(new Object[]{""});
+        }
+        
+        // Asignar el modelo a la Tabla
+        this.setModel(model);
+    }
+
+    // 2. Mantenemos la misma lógica de colores en prepareRenderer
+    @Override
+    public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+        Component cell = super.prepareRenderer(renderer, row, column);
+
+        if (!isCellSelected(row, column)) {
+            Object value = getValueAt(row, column);
+
+            if (value != null && !value.toString().trim().isEmpty()) {
+                try {
+                    int numero = Integer.parseInt(value.toString().trim());
+
+                    if (numero % 2 == 0) {
+                        cell.setBackground(COLOR_PAR);   // VERDE
+                        cell.setForeground(Color.BLACK);
+                    } else {
+                        cell.setBackground(COLOR_IMPAR); // ROJO
+                        cell.setForeground(Color.BLACK);
+                    }
+
+                } catch (NumberFormatException e) {
+                    // Si es texto, decimal, etc. -> Color original
+                    cell.setBackground(getBackground());
+                    cell.setForeground(getForeground());
+                }
+            } else {
+                cell.setBackground(getBackground());
+                cell.setForeground(getForeground());
+            }
+        }
+
+        return cell;
+    }
+}------------------------------------------------------
+
+  package repasoreal;
+
+import java.awt.Color;
+import java.awt.Component;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+import java.sql.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.table.TableCellRenderer;
+
+public class Tabla extends JTable {
+
+    DefaultTableModel tabla = new DefaultTableModel();
+    conexion cc = new conexion();
+
+    public Tabla() {
+        this.setModel(tabla);
+    }
+
+    public void ingresar(String tb, String columna, String bd) {
+        
+        // Forzamos el modelo para ganarle a NetBeans
+        this.setModel(tabla); 
+        
+        tabla.setRowCount(0); 
+        if (tabla.getColumnCount() == 0) {
+            tabla.addColumn(columna); 
+        }
+
+        try {
+            String sql = "Select * from " + tb; 
+            Connection con = cc.conectar(bd);
+            PreparedStatement ps = con.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String valor = rs.getString(columna);
+                tabla.addRow(new Object[]{valor});
+            }
+
+        } catch (SQLException ex) {
+            Logger.getLogger(Tabla.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    @Override
+    public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+        Component compo = super.prepareRenderer(renderer, row, column);
+
+        Object valor = getValueAt(row, column);
+
+        if (valor != null) {
+            try {
+                // Intentamos convertir a número
+                Double numero = Double.parseDouble(valor.toString());
+                
+                // Si pasa, SÍ es un número -> ROJO
+                compo.setBackground(Color.RED);
+                
+            } catch (NumberFormatException ex) {
+                // Si falla y salta al catch, ES UNA LETRA/TEXTO -> VERDE
+                compo.setBackground(Color.GREEN);
+            }
+        } else {
+            // Si está vacía, blanca por defecto
+            compo.setBackground(Color.WHITE);
+        }
+        
+        return compo;
+    }
+}
+------------------------------------------------------------------------
+
