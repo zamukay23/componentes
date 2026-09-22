@@ -565,3 +565,76 @@ public class Tabla extends JTable {
 }
 ------------------------------------------------------------------------
 
+package repasoreal;
+
+import java.awt.Color;
+import java.awt.Component;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+import java.sql.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.table.TableCellRenderer;
+
+public class Tabla extends JTable {
+
+    DefaultTableModel tabla = new DefaultTableModel();
+    conexion cc = new conexion();
+
+    public Tabla() {
+        this.setModel(tabla);
+    }
+
+    public void ingresar(String tb, String columna, String bd) {
+        
+        // Forzamos el modelo para ganarle a NetBeans
+        this.setModel(tabla); 
+        
+        tabla.setRowCount(0); 
+        if (tabla.getColumnCount() == 0) {
+            tabla.addColumn(columna); 
+        }
+
+        try {
+            String sql = "Select * from " + tb; 
+            Connection con = cc.conectar(bd);
+            PreparedStatement ps = con.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String valor = rs.getString(columna);
+                tabla.addRow(new Object[]{valor});
+            }
+
+        } catch (SQLException ex) {
+            Logger.getLogger(Tabla.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    @Override
+    public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+        Component compo = super.prepareRenderer(renderer, row, column);
+
+        Object valor = getValueAt(row, column);
+
+        if (valor != null) {
+            try {
+                // Intentamos convertir a número
+                Double numero = Double.parseDouble(valor.toString());
+                
+                // Si pasa, SÍ es un número -> ROJO
+                compo.setBackground(Color.RED);
+                
+            } catch (NumberFormatException ex) {
+                // Si falla y salta al catch, ES UNA LETRA/TEXTO -> VERDE
+                compo.setBackground(Color.GREEN);
+            }
+        } else {
+            // Si está vacía, blanca por defecto
+            compo.setBackground(Color.WHITE);
+        }
+        
+        return compo;
+    }
+}
+
